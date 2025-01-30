@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:moroccan_recipies_app/firebase_options.dart';
+import 'package:moroccan_recipies_app/theme/app_theme.dart' show AppTheme;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,13 +17,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'MRO Recipes',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
+      home: const MyHomePage(title: 'MRO Recipes'),
     );
   }
 }
