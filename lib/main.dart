@@ -1,14 +1,22 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:moroccan_recipies_app/firebase_options.dart';
+import 'package:moroccan_recipies_app/screens/welcome_screen.dart';
+import 'package:moroccan_recipies_app/screens/signin_screen.dart';
+import 'package:moroccan_recipies_app/screens/register_screen.dart';
 import 'package:moroccan_recipies_app/theme/app_theme.dart' show AppTheme;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(MyApp());
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase initialized successfully');
+  } catch (e) {
+    print('Error initializing Firebase: $e');
+  }
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -22,7 +30,12 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: const MyHomePage(title: 'MRO Recipes'),
+      routes: {
+        '/': (context) => const WelcomeScreen(),
+        '/signin': (context) => const SignInScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const MyHomePage(title: "Home Page",), // Create this page
+      },
     );
   }
 }
