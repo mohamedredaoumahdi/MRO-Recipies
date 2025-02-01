@@ -14,6 +14,7 @@ class ProfileScreen extends StatelessWidget {
           onPressed: onBack,
         ),
         title: const Text('Profile'),
+        actions: [IconButton(onPressed: (){}, icon: const Icon(Icons.settings))],
       ),
       body: const Center(
         child: Text('Profile Screen Content'),
