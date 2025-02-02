@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
+import 'package:moroccan_recipies_app/widgets/homeContent_navBar.dart';
 
 // First, define HomeContent widget
 class HomeContent extends StatelessWidget {
@@ -14,40 +15,10 @@ class HomeContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Bar with Cart Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.wb_sunny_outlined, 
-                            color: AppColors.primary, 
-                            size: 24),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text('Good Morning',
-                            style: Theme.of(context).textTheme.bodyLarge),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('Alena Sabyan',
-                        style: Theme.of(context).textTheme.displayLarge),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  onPressed: () {},
-                  color: AppColors.textPrimary,
-                ),
-              ],
-            ),
-
+            HomeContentNavBar(),
             const SizedBox(height: AppSpacing.xl),
-
             // Featured Section
-            Text('Featured',
-                style: Theme.of(context).textTheme.displayMedium),
+            Text('Featured',style: Theme.of(context).textTheme.displayMedium),
             const SizedBox(height: AppSpacing.md),
             SizedBox(
               height: 200,
