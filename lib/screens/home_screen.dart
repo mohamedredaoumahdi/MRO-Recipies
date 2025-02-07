@@ -6,9 +6,16 @@ import 'dart:convert';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 
 // First, define HomeContent widget
-class HomeContent extends StatelessWidget {
-  final RecipeService _recipeService = RecipeService();
+class HomeContent extends StatefulWidget {
   HomeContent({super.key});
+
+  @override
+  State<HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> {
+  final RecipeService _recipeService = RecipeService();
+  String _selectedCategory = 'All';  // Track selected category
 
   @override
   Widget build(BuildContext context) {
@@ -52,43 +59,49 @@ class HomeContent extends StatelessWidget {
               children: [
                 Text('Category',
                     style: Theme.of(context).textTheme.displayMedium),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('See All',
-                      style: TextStyle(color: AppColors.primary)),
-                ),
+                // TextButton(
+                //   onPressed: () {},
+                //   child: const Text('See All',
+                //       style: TextStyle(color: AppColors.primary)),
+                // ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildCategoryChip('Breakfast', true),
+                  _buildCategoryChip('All'),
                   const SizedBox(width: AppSpacing.sm),
-                  _buildCategoryChip('Lunch', false),
+                  _buildCategoryChip('Breakfast'),
                   const SizedBox(width: AppSpacing.sm),
-                  _buildCategoryChip('Dinner', false),
+                  _buildCategoryChip('Lunch'),
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildCategoryChip('Dinner'),
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildCategoryChip('Snack'),
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildCategoryChip('Dessert'),
                 ],
               ),
             ),
 
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.lg),
 
-            // Popular Recipes Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Popular Recipes',
-                    style: Theme.of(context).textTheme.displayMedium),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('See All',
-                      style: TextStyle(color: AppColors.primary)),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
+            // // Popular Recipes Section
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     Text('Popular Recipes',
+            //         style: Theme.of(context).textTheme.displayMedium),
+            //     TextButton(
+            //       onPressed: () {},
+            //       child: const Text('See All',
+            //           style: TextStyle(color: AppColors.primary)),
+            //     ),
+            //   ],
+            // ),
+            // const SizedBox(height: AppSpacing.md),
             SizedBox(
               height: 240,
               child: StreamBuilder<List<Recipe>>(
@@ -104,16 +117,36 @@ class HomeContent extends StatelessWidget {
 
                   final recipes = snapshot.data ?? [];
                   
-                  if (recipes.isEmpty) {
-                    return const Center(child: Text('No recipes found'));
+                  // Filter recipes based on selected category
+                  final filteredRecipes = _selectedCategory == 'All' 
+                      ? recipes 
+                      : recipes.where((recipe) => recipe.category == _selectedCategory).toList();
+                  
+                  if (filteredRecipes.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.no_meals, color: AppColors.textSecondary, size: 48),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'No recipes found in $_selectedCategory category',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
                   }
 
                   return ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: recipes.length,
+                    itemCount: filteredRecipes.length,
                     separatorBuilder: (context, index) => 
                         const SizedBox(width: AppSpacing.md),
-                    itemBuilder: (context, index) => _buildRecipeCard(recipes[index]),
+                    itemBuilder: (context, index) => _buildRecipeCard(filteredRecipes[index]),
                   );
                 },
               ),
@@ -161,11 +194,26 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip(String label, bool isSelected) {
+  Widget _buildCategoryChip(String label) {
     return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (bool selected) {},
+      label: Text(
+        label,
+        style: TextStyle(
+          color: _selectedCategory == label ? AppColors.textLight : AppColors.textPrimary,
+        ),
+      ),
+      selected: _selectedCategory == label,
+      selectedColor: AppColors.primary,
+      backgroundColor: AppColors.background,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      showCheckmark: false,
+      onSelected: (bool selected) {
+        if (selected) {
+          setState(() {
+            _selectedCategory = label;
+          });
+        }
+      },
     );
   }
 
