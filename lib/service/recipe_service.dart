@@ -203,4 +203,10 @@ class RecipeService {
         .snapshots()
         .map((doc) => doc.exists);
   }
+
+  Stream<QuerySnapshot> getUserStats(String userId) {
+    return _recipesCollection
+        .where('createdBy', isEqualTo: userId)
+        .snapshots();
+  }
 }
