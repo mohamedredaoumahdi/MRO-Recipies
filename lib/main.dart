@@ -4,7 +4,6 @@ import 'package:moroccan_recipies_app/firebase_options.dart';
 import 'package:moroccan_recipies_app/screens/welcome_screen.dart';
 import 'package:moroccan_recipies_app/screens/signin_screen.dart';
 import 'package:moroccan_recipies_app/screens/register_screen.dart';
-import 'package:moroccan_recipies_app/theme/app_colors.dart';
 import 'package:moroccan_recipies_app/theme/app_theme.dart' show AppTheme;
 import 'package:moroccan_recipies_app/widgets/bottom_nav_bar.dart';
 

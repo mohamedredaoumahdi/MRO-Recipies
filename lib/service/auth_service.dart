@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -29,6 +31,13 @@ class AuthService {
       // Update user profile with full name
       await userCredential.user?.updateDisplayName(fullName);
       print('User profile updated with name: $fullName'); // Debug print
+
+      // Save user data to Firestore
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'email': email,
+        'fullName': fullName,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -125,4 +134,28 @@ class AuthService {
 
   // Get user ID
   String? get userId => currentUser?.uid;
+
+  // Update or add this method
+  Future<void> register({
+    required String email,
+    required String password,
+    required String fullName,  // Make sure this is passed from RegisterScreen
+  }) async {
+    try {
+      // Create auth user
+      final UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      // Save user data to Firestore
+      await _firestore.collection('users').doc(result.user!.uid).set({
+        'email': email,
+        'fullName': fullName,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw 'Failed to register: ${e.toString()}';
+    }
+  }
 }

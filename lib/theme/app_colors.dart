@@ -17,6 +17,9 @@ class AppColors {
   // Status Colors
   static const success = Color(0xFF22C55E);
   static const error = Color(0xFFEF4444);
+
+  // borders
+  static const Color border = Color(0xFFE0E0E0);  // Light grey color for borders
 }
 
 class AppTextStyles {
@@ -33,6 +36,12 @@ class AppTextStyles {
     color: AppColors.textPrimary,
     fontFamily: 'Inter',
   );
+  static const TextStyle heading3 = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+    fontFamily: 'Inter'
+  );
 
   static const bodyLarge = TextStyle(
     fontSize: 16,
@@ -44,6 +53,11 @@ class AppTextStyles {
   static const bodyMedium = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
+    color: AppColors.textSecondary,
+    fontFamily: 'Inter',
+  );
+  static const TextStyle bodySmall = TextStyle(
+    fontSize: 12,
     color: AppColors.textSecondary,
     fontFamily: 'Inter',
   );

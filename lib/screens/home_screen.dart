@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:moroccan_recipies_app/models/recipe.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
 import 'package:moroccan_recipies_app/widgets/homeContent_navBar.dart';
+import 'dart:convert';
+import 'package:moroccan_recipies_app/service/recipe_service.dart';
 
 // First, define HomeContent widget
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+  final RecipeService _recipeService = RecipeService();
+  HomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -87,21 +91,31 @@ class HomeContent extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             SizedBox(
               height: 240,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _buildRecipeCard(
-                    'Healthy Taco Salad\nwith fresh vegetable',
-                    '120 Kcal',
-                    '20 Min',
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  _buildRecipeCard(
-                    'Japanese-style\nPancakes Recipe',
-                    '64 Kcal',
-                    '12 Min',
-                  ),
-                ],
+              child: StreamBuilder<List<Recipe>>(
+                stream: _recipeService.getRecipes(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final recipes = snapshot.data ?? [];
+                  
+                  if (recipes.isEmpty) {
+                    return const Center(child: Text('No recipes found'));
+                  }
+
+                  return ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: recipes.length,
+                    separatorBuilder: (context, index) => 
+                        const SizedBox(width: AppSpacing.md),
+                    itemBuilder: (context, index) => _buildRecipeCard(recipes[index]),
+                  );
+                },
               ),
             ),
           ],
@@ -155,9 +169,10 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRecipeCard(String title, String calories, String duration) {
+  Widget _buildRecipeCard(Recipe recipe) {
     return SizedBox(
       width: 200,
+      height: 240,  // Fixed height
       child: Card(
         elevation: 0,
         color: AppColors.cardBackground,
@@ -173,11 +188,19 @@ class HomeContent extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    child: Image.asset(
-                      'assets/images/recipe1.jpg',
-                      width: 168,
-                      height: 128,
+                    child: Image.memory(
+                      base64Decode(recipe.imageUrl),
+                      width: double.infinity,
+                      height: 120,  // Reduced height
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: double.infinity,
+                          height: 120,
+                          color: AppColors.background,
+                          child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
+                        );
+                      },
                     ),
                   ),
                   Positioned(
@@ -189,46 +212,60 @@ class HomeContent extends StatelessWidget {
                         color: AppColors.cardBackground,
                         borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                       ),
-                      child: Icon(
-                        Icons.favorite_border,
-                        size: 20,
-                        color: AppColors.textPrimary,
-                      ),
+                      child: Icon(Icons.favorite_border, size: 20, color: AppColors.textPrimary),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              Expanded(  // Make text area flexible
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.title,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    FutureBuilder<String>(
+                      future: _recipeService.getUserName(recipe.createdBy),  // Add this method
+                      builder: (context, snapshot) {
+                        return Text(
+                          'by ${snapshot.data ?? recipe.createdBy}',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Icon(Icons.local_fire_department, size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${recipe.calories ?? 0} Kcal',
+                          style: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${recipe.prepTime + recipe.cookTime} Min',
+                          style: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  Icon(
-                    Icons.local_fire_department,
-                    size: 16,
-                    color: AppColors.textSecondary,
-                  ),
-                  Text(
-                    calories,
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: AppColors.textSecondary,
-                  ),
-                  Text(
-                    duration,
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                ],
               ),
             ],
           ),

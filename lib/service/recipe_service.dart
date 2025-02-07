@@ -11,10 +11,10 @@ class RecipeService {
   // Create a new recipe with image
   Future<String> createRecipeWithImage(Recipe recipe, File imageFile) async {
     try {
-      // First upload the image
-      final imageUrl = await _imageService.uploadRecipeImage(imageFile);
+      // Convert image to base64
+      final String base64Image = await _imageService.convertImageToBase64(imageFile);
       
-      // Create recipe with the image URL
+      // Create recipe with the base64 image
       final recipeWithImage = Recipe(
         id: recipe.id,
         title: recipe.title,
@@ -24,7 +24,7 @@ class RecipeService {
         createdAt: recipe.createdAt,
         ingredients: recipe.ingredients,
         steps: recipe.steps,
-        imageUrl: imageUrl, // Use the uploaded image URL
+        imageUrl: base64Image, // Store base64 string instead of URL
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,
         servings: recipe.servings,
@@ -121,7 +121,7 @@ class RecipeService {
   Stream<List<Recipe>> searchRecipes(String query) {
     return _recipesCollection
         .where('title', isGreaterThanOrEqualTo: query)
-        .where('title', isLessThan: query + 'z')
+        .where('title', isLessThan: '${query}z')
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => Recipe.fromFirestore(doc)).toList();
@@ -143,6 +143,19 @@ class RecipeService {
       await _recipesCollection.doc(recipeId).update({'commentsCount': count});
     } catch (e) {
       throw 'Failed to update comments count: $e';
+    }
+  }
+
+  Future<String> getUserName(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        return userData?['fullName'] ?? userData?['displayName'] ?? userId;
+      }
+      return userId;
+    } catch (e) {
+      return userId;
     }
   }
 }

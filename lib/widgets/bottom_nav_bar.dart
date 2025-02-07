@@ -72,11 +72,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
               },
               backgroundColor: Theme.of(context).primaryColor,
               shape: const CircleBorder(),
+              elevation: 2.0,
               child: const Icon(
                 Icons.add,
                 size: 30,
               ),
-              elevation: 2.0,
             ),
           ),
         ),

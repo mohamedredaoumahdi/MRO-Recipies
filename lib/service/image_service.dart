@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as path;
@@ -43,6 +44,29 @@ class ImageService {
     }
   }
 
+  Future<String> convertImageToBase64(File imageFile) async {
+    try {
+      // Compress the image first
+      final compressedImage = await compressImage(imageFile);
+      if (compressedImage == null) {
+        throw 'Failed to compress image';
+      }
+
+      // Read the compressed image as bytes
+      final bytes = await compressedImage.readAsBytes();
+      
+      // Convert to base64
+      String base64Image = base64Encode(bytes);
+      
+      // Delete the temporary compressed file
+      await compressedImage.delete();
+
+      return base64Image;
+    } catch (e) {
+      throw 'Failed to convert image: $e';
+    }
+  }
+
   Future<File?> compressImage(File file) async {
     try {
       final filePath = file.absolute.path;
@@ -53,7 +77,7 @@ class ImageService {
       final compressedFile = await FlutterImageCompress.compressAndGetFile(
         filePath,
         outPath,
-        quality: 70,
+        quality: 70,  // Adjust quality to ensure size is under 1MB
         format: CompressFormat.jpeg,
       );
 
