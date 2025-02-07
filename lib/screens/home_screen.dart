@@ -4,6 +4,7 @@ import 'package:moroccan_recipies_app/theme/app_colors.dart';
 import 'package:moroccan_recipies_app/widgets/homeContent_navBar.dart';
 import 'dart:convert';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
+import 'package:moroccan_recipies_app/service/auth_service.dart';
 
 // First, define HomeContent widget
 class HomeContent extends StatefulWidget {
@@ -15,6 +16,7 @@ class HomeContent extends StatefulWidget {
 
 class _HomeContentState extends State<HomeContent> {
   final RecipeService _recipeService = RecipeService();
+  final AuthService _authService = AuthService();
   String _selectedCategory = 'All';  // Track selected category
 
   @override
@@ -227,96 +229,128 @@ class _HomeContentState extends State<HomeContent> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppBorderRadius.lg),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    child: Image.memory(
-                      base64Decode(recipe.imageUrl),
-                      width: double.infinity,
-                      height: 120,  // Reduced height
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: double.infinity,
-                          height: 120,
-                          color: AppColors.background,
-                          child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
-                        );
-                      },
-                    ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                  child: Image.memory(
+                    base64Decode(recipe.imageUrl),
+                    width: double.infinity,
+                    height: 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: double.infinity,
+                        height: 120,
+                        color: AppColors.background,
+                        child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
+                      );
+                    },
                   ),
-                  Positioned(
-                    top: AppSpacing.sm,
-                    right: AppSpacing.sm,
+                ),
+                Positioned(
+                  top: AppSpacing.sm,
+                  right: AppSpacing.sm,
+                  child: GestureDetector(
+                    onTap: () async {
+                      try {
+                        final userId = _authService.currentUser?.uid;
+                        if (userId != null) {
+                          final isLiked = await _recipeService.toggleLike(recipe.id, userId);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(isLiked ? 'Added to bookmarks' : 'Removed from bookmarks'),
+                              backgroundColor: isLiked ? AppColors.success : AppColors.textSecondary,
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to update bookmark'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(AppSpacing.xs),
                       decoration: BoxDecoration(
                         color: AppColors.cardBackground,
                         borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                       ),
-                      child: Icon(Icons.favorite_border, size: 20, color: AppColors.textPrimary),
+                      child: StreamBuilder<bool>(
+                        stream: _recipeService.isLikedByUser(recipe.id, _authService.currentUser?.uid ?? ''),
+                        builder: (context, snapshot) {
+                          final isLiked = snapshot.data ?? false;
+                          return Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            size: 20,
+                            color: isLiked ? AppColors.success : AppColors.textPrimary,
+                          );
+                        },
+                      ),
                     ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.title,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  FutureBuilder<String>(
+                    future: _recipeService.getUserName(recipe.createdBy),
+                    builder: (context, snapshot) {
+                      return Text(
+                        'by ${snapshot.data ?? recipe.createdBy}',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Icon(Icons.local_fire_department, 
+                        size: 16, 
+                        color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${recipe.calories ?? 0} Kcal',
+                        style: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.access_time, 
+                        size: 16, 
+                        color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${recipe.prepTime + recipe.cookTime} min',
+                        style: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Expanded(  // Make text area flexible
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      recipe.title,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    FutureBuilder<String>(
-                      future: _recipeService.getUserName(recipe.createdBy),  // Add this method
-                      builder: (context, snapshot) {
-                        return Text(
-                          'by ${snapshot.data ?? recipe.createdBy}',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      children: [
-                        Icon(Icons.local_fire_department, size: 16, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${recipe.calories ?? 0} Kcal',
-                          style: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${recipe.prepTime + recipe.cookTime} Min',
-                          style: AppTextStyles.bodyMedium.copyWith(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

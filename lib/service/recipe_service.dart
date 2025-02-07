@@ -158,4 +158,49 @@ class RecipeService {
       return userId;
     }
   }
+
+  Future<bool> toggleLike(String recipeId, String userId) async {
+    final recipeRef = _recipesCollection.doc(recipeId);
+    final userLikesRef = _recipesCollection.doc(userId).collection('likes').doc(recipeId);
+
+    return FirebaseFirestore.instance.runTransaction<bool>((transaction) async {
+      final likeDoc = await transaction.get(userLikesRef);
+      
+      if (likeDoc.exists) {
+        transaction.delete(userLikesRef);
+        return false;
+      } else {
+        transaction.set(userLikesRef, {
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        return true;
+      }
+    });
+  }
+
+    Stream<List<Recipe>> getLikedRecipes(String userId) {
+    return _recipesCollection
+        .doc(userId)
+        .collection('likes')
+        .snapshots()
+        .asyncMap((snapshot) async {
+          final recipes = <Recipe>[];
+          for (var doc in snapshot.docs) {
+            final recipeDoc = await _recipesCollection.doc(doc.id).get();
+            if (recipeDoc.exists) {
+              recipes.add(Recipe.fromFirestore(recipeDoc));
+            }
+          }
+          return recipes;
+        });
+  }
+
+    Stream<bool> isLikedByUser(String recipeId, String userId) {
+    return _recipesCollection
+        .doc(userId)
+        .collection('likes')
+        .doc(recipeId)
+        .snapshots()
+        .map((doc) => doc.exists);
+  }
 }
