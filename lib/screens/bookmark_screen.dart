@@ -36,6 +36,10 @@ class BookmarkScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('My Bookmarks'),
         backgroundColor: AppColors.primary,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: onBack, // Call the function passed from BottomNavBar
+        ),
       ),
       body: StreamBuilder<List<Recipe>>(
         stream: _recipeService.getLikedRecipes(userId),

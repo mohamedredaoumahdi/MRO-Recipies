@@ -186,4 +186,19 @@ class AuthService {
       throw 'Failed to change password: $e';
     }
   }
+
+  // Add this method for anonymous sign in
+  Future<UserCredential> signInAnonymously() async {
+    try {
+      final UserCredential userCredential = await _auth.signInAnonymously();
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'isAnonymous': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'fullName': 'Guest User',
+      });
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
 }

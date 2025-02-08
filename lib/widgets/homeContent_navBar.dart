@@ -53,11 +53,11 @@ class HomeContentNavBar extends StatelessWidget {
                         style: Theme.of(context).textTheme.displayLarge),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  onPressed: () {},
-                  color: AppColors.textPrimary,
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.shopping_cart_outlined),
+                //   onPressed: () {},
+                //   color: AppColors.textPrimary,
+                // ),
               ],
             );
   }

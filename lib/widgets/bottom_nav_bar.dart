@@ -4,6 +4,7 @@ import 'package:moroccan_recipies_app/screens/search_screen.dart';
 import 'package:moroccan_recipies_app/screens/bookmark_screen.dart';
 import 'package:moroccan_recipies_app/screens/profile_screen.dart';
 import 'package:moroccan_recipies_app/screens/add_recipe_screen.dart';
+import 'package:moroccan_recipies_app/theme/app_colors.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -70,12 +71,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
                 );
               },
-              backgroundColor: Theme.of(context).primaryColor,
+              backgroundColor: AppColors.primary,
               shape: const CircleBorder(),
               elevation: 2.0,
               child: const Icon(
                 Icons.add,
                 size: 30,
+                color: AppColors.textLight,
               ),
             ),
           ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:moroccan_recipies_app/screens/register_screen.dart';
+import 'package:moroccan_recipies_app/screens/signIn_screen.dart';
 import 'package:moroccan_recipies_app/service/auth_service.dart';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
@@ -18,6 +20,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   final _nameController = TextEditingController();
 
+  bool get _isAnonymous => _authService.currentUser?.isAnonymous ?? false;
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -34,75 +40,187 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         title: const Text('Profile'),
         actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.save : Icons.edit),
-            onPressed: () {
-              if (_isEditing) {
-                _updateProfile();
-              }
-              setState(() {
-                _isEditing = !_isEditing;
-              });
-            },
+          if (!_isAnonymous)
+            IconButton(
+              icon: Icon(_isEditing ? Icons.save : Icons.edit),
+              onPressed: () {
+                if (_isEditing) {
+                  _updateProfile();
+                }
+                setState(() {
+                  _isEditing = !_isEditing;
+                });
+              },
+            ),
+        ],
+      ),
+      body: _isAnonymous ? _buildGuestView(screenHeight) : _buildUserProfile(),
+    );
+  }
+
+  Widget _buildGuestView(double screenHeight) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.account_circle,
+              size: screenHeight * 0.12,
+              color: AppColors.primary.withOpacity(0.5),
+            ),
+            SizedBox(height: screenHeight * 0.02),
+            Text(
+              'Guest User',
+              style: AppTextStyles.heading2,
+            ),
+            SizedBox(height: screenHeight * 0.01),
+            Text(
+              'Create an account to:',
+              style: AppTextStyles.bodyLarge,
+            ),
+            SizedBox(height: screenHeight * 0.02),
+            _buildFeatureItem(Icons.add_circle_outline, 'Share your own recipes'),
+            _buildFeatureItem(Icons.favorite_border, 'Save favorite recipes'),
+            _buildFeatureItem(Icons.bookmark_border, 'Create recipe collections'),
+            _buildFeatureItem(Icons.person_outline, 'Personalize your profile'),
+            SizedBox(height: screenHeight * 0.03),
+            SizedBox(
+              width: double.infinity,
+              height: screenHeight * 0.05,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Create Account'),
+              ),
+            ),
+            SizedBox(height: screenHeight * 0.015),
+            SizedBox(
+              width: double.infinity,
+              height: screenHeight * 0.05,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignInScreen()),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.primary),
+                ),
+                child: Text(
+                  'Sign In',
+                  style: TextStyle(color: AppColors.primary),
+                ),
+              ),
+            ),
+            SizedBox(height: screenHeight * 0.01),
+            TextButton(
+              onPressed: () async {
+                try {
+                  await _authService.signOut();
+                  if (mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/signin',
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
+                    );
+                  }
+                }
+              },
+              child: const Text('Sign Out'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.bodyMedium,
+            ),
           ),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(_authService.userId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    );
+  }
 
-          final userData = snapshot.data!.data() as Map<String, dynamic>?;
-          final createdAt = userData?['createdAt'] as Timestamp?;
+  Widget _buildUserProfile() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(_authService.userId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    (userData?['fullName'] ?? 'U')[0].toUpperCase(),
-                    style: const TextStyle(fontSize: 40, color: Colors.white),
-                  ),
+        final userData = snapshot.data!.data() as Map<String, dynamic>?;
+        final createdAt = userData?['createdAt'] as Timestamp?;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: AppColors.primary,
+                child: Text(
+                  (userData?['fullName'] ?? 'U')[0].toUpperCase(),
+                  style: const TextStyle(fontSize: 40, color: Colors.white),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                if (_isEditing)
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Full Name'),
-                  )
-                else
-                  Text(
-                    userData?['fullName'] ?? 'User',
-                    style: AppTextStyles.heading2,
-                  ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              if (_isEditing)
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Full Name'),
+                )
+              else
                 Text(
-                  _authService.userEmail ?? '',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  userData?['fullName'] ?? 'User',
+                  style: AppTextStyles.heading2,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Member since ${_formatDate(createdAt?.toDate())}',
-                  style: AppTextStyles.bodySmall,
+              Text(
+                _authService.userEmail ?? '',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                _buildStatsRow(),
-                const SizedBox(height: AppSpacing.xl),
-                _buildActionButtons(context),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Member since ${_formatDate(createdAt?.toDate())}',
+                style: AppTextStyles.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _buildStatsRow(),
+              const SizedBox(height: AppSpacing.xl),
+              _buildActionButtons(context),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -115,8 +233,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildStatItem('Recipes', recipeCount.toString()),
-            _buildStatItem('Likes', '0'), // Implement likes count
-            _buildStatItem('Bookmarks', '0'), // Implement bookmarks count
+            _buildStatItem('Likes', '0'),
+            _buildStatItem('Bookmarks', '0'),
           ],
         );
       },
@@ -161,8 +279,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             await _authService.signOut();
             if (mounted) {
               Navigator.pushNamedAndRemoveUntil(
-                context, 
-                '/signin', 
+                context,
+                '/signin',
                 (route) => false,
               );
             }
@@ -191,7 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .collection('users')
           .doc(_authService.userId)
           .update({'fullName': _nameController.text});
-          
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
@@ -207,8 +325,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _changePassword() async {
-    final _currentPasswordController = TextEditingController();
-    final _newPasswordController = TextEditingController();
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
 
     await showDialog(
       context: context,
@@ -218,13 +336,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
-              controller: _currentPasswordController,
+              controller: currentPasswordController,
               decoration: const InputDecoration(labelText: 'Current Password'),
               obscureText: true,
             ),
             const SizedBox(height: AppSpacing.md),
             TextFormField(
-              controller: _newPasswordController,
+              controller: newPasswordController,
               decoration: const InputDecoration(labelText: 'New Password'),
               obscureText: true,
             ),
@@ -239,8 +357,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () async {
               try {
                 await _authService.changePassword(
-                  currentPassword: _currentPasswordController.text,
-                  newPassword: _newPasswordController.text,
+                  currentPassword: currentPasswordController.text,
+                  newPassword: newPasswordController.text,
                 );
                 if (mounted) {
                   Navigator.pop(context);
@@ -259,5 +377,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 }

@@ -2,24 +2,28 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary Colors
-  static const primaryDark = Color(0xFF1F2937);    // Dark text color
-  static const primary = Color(0xFF7FBEB3);        // Teal/mint accent color
+  static const primaryDark = Color(0xFF5A3825);    // Dark Brown
+  static const primary = Color(0xFFD97642);        // Burnt Orange
   
   // Background Colors
-  static const background = Color(0xFFFAFAFA);     // Light background
-  static const cardBackground = Color(0xFFFFFFFF);  // White card background
+  static const background = Color(0xFFF8F5F2);     // Off-white
+  static const cardBackground = Color(0xFFFFFFFF);  // White
   
   // Text Colors
-  static const textPrimary = Color(0xFF1F2937);    // Primary text
-  static const textSecondary = Color(0xFF6B7280);  // Secondary/gray text
-  static const textLight = Color(0xFFFFFFFF);      // White text
+  static const textPrimary = Color(0xFF5A3825);    // Dark Brown
+  static const textSecondary = Color(0xFFD97642);  // Burnt Orange
+  static const textLight = Color(0xFFFFFFFF);      // White
+  
+  // Accent Colors
+  static const accent = Color(0xFFA32F2F);         // Deep Red
+  static const highlight = Color(0xFFE2B13C);      // Golden Yellow
   
   // Status Colors
-  static const success = Color(0xFF22C55E);
-  static const error = Color(0xFFEF4444);
+  static const success = Color(0xFFD97642);        // Burnt Orange
+  static const error = Color(0xFFA32F2F);          // Deep Red
 
   // borders
-  static const Color border = Color(0xFFE0E0E0);  // Light grey color for borders
+  static const Color border = Color(0xFF5A3825);   // Dark Brown for borders
 }
 
 class AppTextStyles {

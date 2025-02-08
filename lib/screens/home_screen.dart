@@ -8,7 +8,7 @@ import 'package:moroccan_recipies_app/service/auth_service.dart';
 
 // First, define HomeContent widget
 class HomeContent extends StatefulWidget {
-  HomeContent({super.key});
+  const HomeContent({super.key});
 
   @override
   State<HomeContent> createState() => _HomeContentState();
