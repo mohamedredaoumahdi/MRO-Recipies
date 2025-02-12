@@ -5,6 +5,7 @@ import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'package:moroccan_recipies_app/service/auth_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key, required this.onBack});
@@ -17,6 +18,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final RecipeService _recipeService = RecipeService();
+  final AuthService _authService = AuthService();
   String _searchQuery = '';
   String _selectedCategory = '';
   List<Recipe> _searchResults = [];
@@ -28,7 +30,9 @@ class _SearchScreenState extends State<SearchScreen> {
     'Couscous', 'Tajine', 'Pastilla', 'Harira', 'Rfissa'
   ];
   
-  List<String> recentSearches = [];
+  final List<String> recentSearches = [
+    'Moroccan Bread', 'Mint Tea', 'Chicken Tajine'
+  ];
 
   @override
   void initState() {
@@ -236,6 +240,33 @@ class _SearchScreenState extends State<SearchScreen> {
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'by: ',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        Expanded(
+                          child: FutureBuilder<String?>(
+                            future: _authService.getUsernameById(recipe.createdBy),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? 'Unknown User',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            },
                           ),
                         ),
                       ],

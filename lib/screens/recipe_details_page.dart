@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:moroccan_recipies_app/models/recipe.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
 import 'dart:convert';
+import 'package:moroccan_recipies_app/service/auth_service.dart';
+import 'package:moroccan_recipies_app/service/recipe_service.dart';
+import 'package:moroccan_recipies_app/screens/add_recipe_screen.dart';
 
 class RecipeDetailsPage extends StatelessWidget {
   final Recipe recipe;
+  final AuthService _authService = AuthService();
+  final RecipeService _recipeService = RecipeService();
 
-  const RecipeDetailsPage({super.key, required this.recipe});
+  RecipeDetailsPage({super.key, required this.recipe});
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +66,28 @@ class RecipeDetailsPage extends StatelessWidget {
               ),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              FutureBuilder<bool>(
+                future: _authService.isCurrentUserAdmin(),
+                builder: (context, snapshot) {
+                  if (snapshot.data == true) {
+                    return Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.white),
+                          onPressed: () => _editRecipe(context),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                          onPressed: () => _deleteRecipe(context),
+                        ),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
           ),
 
           // Recipe Content
@@ -245,5 +272,55 @@ class RecipeDetailsPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _editRecipe(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddRecipeScreen(recipe: recipe),
+      ),
+    );
+  }
+
+  Future<void> _deleteRecipe(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Recipe'),
+        content: const Text('Are you sure you want to delete this recipe?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _recipeService.deleteRecipe(recipe.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Recipe deleted successfully')),
+          );
+          Navigator.pop(context); // Return to previous screen
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error deleting recipe: $e')),
+          );
+        }
+      }
+    }
   }
 } 

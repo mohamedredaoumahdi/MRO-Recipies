@@ -7,7 +7,8 @@ import '../service/recipe_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+  final Recipe? recipe;
+  const AddRecipeScreen({super.key, this.recipe});
 
   @override
   _AddRecipeScreenState createState() => _AddRecipeScreenState();
@@ -27,6 +28,24 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _servingsController = TextEditingController();
   String _selectedDifficulty = 'Easy';
   final _caloriesController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recipe != null) {
+      // Populate fields with existing recipe data
+      _titleController.text = widget.recipe!.title;
+      _descriptionController.text = widget.recipe!.description;
+      _selectedCategory = widget.recipe!.category;
+      _ingredients.addAll(widget.recipe!.ingredients);
+      _steps.addAll(widget.recipe!.steps);
+      _prepTimeController.text = widget.recipe!.prepTime.toString();
+      _cookTimeController.text = widget.recipe!.cookTime.toString();
+      _servingsController.text = widget.recipe!.servings.toString();
+      _selectedDifficulty = widget.recipe!.difficulty;
+      _caloriesController.text = widget.recipe!.calories?.toString() ?? '';
+    }
+  }
 
   Future<void> _pickImage() async {
     try {

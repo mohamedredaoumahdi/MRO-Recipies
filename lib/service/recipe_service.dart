@@ -169,42 +169,65 @@ class RecipeService {
   }
 
   Future<bool> toggleLike(String recipeId, String userId) async {
-    //final recipeRef = _recipesCollection.doc(recipeId);
-    final userLikesRef = _recipesCollection.doc(userId).collection('likes').doc(recipeId);
+    print('Toggling like for recipe: $recipeId, user: $userId'); // Debug print
+    try {
+      final userLikesRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('likes')
+          .doc(recipeId);
 
-    return FirebaseFirestore.instance.runTransaction<bool>((transaction) async {
-      final likeDoc = await transaction.get(userLikesRef);
-      
+      final likeDoc = await userLikesRef.get();
+      print('Like document exists: ${likeDoc.exists}'); // Debug print
+
       if (likeDoc.exists) {
-        transaction.delete(userLikesRef);
+        await userLikesRef.delete();
+        print('Like removed'); // Debug print
         return false;
       } else {
-        transaction.set(userLikesRef, {
+        await userLikesRef.set({
           'timestamp': FieldValue.serverTimestamp(),
         });
+        print('Like added'); // Debug print
         return true;
       }
-    });
+    } catch (e) {
+      print('Error in toggleLike: $e'); // Debug print
+      throw e;
+    }
   }
 
-    Stream<List<Recipe>> getLikedRecipes(String userId) {
-    return _recipesCollection
+  Stream<List<Recipe>> getLikedRecipes(String userId) {
+    print('Getting liked recipes for user: $userId'); // Debug print
+    return FirebaseFirestore.instance
+        .collection('users')
         .doc(userId)
         .collection('likes')
         .snapshots()
         .asyncMap((snapshot) async {
+          print('Likes snapshot size: ${snapshot.docs.length}'); // Debug print
           final recipes = <Recipe>[];
           for (var doc in snapshot.docs) {
-            final recipeDoc = await _recipesCollection.doc(doc.id).get();
-            if (recipeDoc.exists) {
-              recipes.add(Recipe.fromFirestore(recipeDoc));
+            print('Processing like document: ${doc.id}'); // Debug print
+            try {
+              final recipeDoc = await FirebaseFirestore.instance
+                  .collection('recipes')
+                  .doc(doc.id)
+                  .get();
+              print('Recipe document exists: ${recipeDoc.exists}'); // Debug print
+              if (recipeDoc.exists) {
+                recipes.add(Recipe.fromFirestore(recipeDoc));
+              }
+            } catch (e) {
+              print('Error fetching recipe: $e'); // Debug print
             }
           }
+          print('Returning ${recipes.length} recipes'); // Debug print
           return recipes;
         });
   }
 
-    Stream<bool> isLikedByUser(String recipeId, String userId) {
+  Stream<bool> isLikedByUser(String recipeId, String userId) {
     return _recipesCollection
         .doc(userId)
         .collection('likes')

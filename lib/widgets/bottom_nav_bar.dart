@@ -5,6 +5,7 @@ import 'package:moroccan_recipies_app/screens/bookmark_screen.dart';
 import 'package:moroccan_recipies_app/screens/profile_screen.dart';
 import 'package:moroccan_recipies_app/screens/add_recipe_screen.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
+import 'package:moroccan_recipies_app/service/auth_service.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -14,6 +15,7 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
+  final AuthService _authService = AuthService();
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
@@ -60,27 +62,23 @@ class _BottomNavBarState extends State<BottomNavBar> {
             });
           },
         ),
-        floatingActionButton: Transform.translate(
-          offset: const Offset(0, -15),
-          child: Container(
-            margin: const EdgeInsets.only(top: 30),
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
-                );
-              },
-              backgroundColor: AppColors.primary,
-              shape: const CircleBorder(),
-              elevation: 2.0,
-              child: const Icon(
-                Icons.add,
-                size: 30,
-                color: AppColors.textLight,
-              ),
-            ),
-          ),
+        floatingActionButton: FutureBuilder<bool>(
+          future: _authService.isCurrentUserAdmin(),
+          builder: (context, snapshot) {
+            if (snapshot.data == true) {
+              return FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+                  );
+                },
+                backgroundColor: AppColors.primary,
+                child: const Icon(Icons.add),
+              );
+            }
+            return const SizedBox.shrink(); // Hide button for non-admin users
+          },
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: BottomAppBar(

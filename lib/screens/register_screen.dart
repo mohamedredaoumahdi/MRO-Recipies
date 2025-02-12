@@ -26,7 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await _authService.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
-          fullName: _nameController.text.trim(),
+          username: _nameController.text.trim(),
         );
         // On success, navigate to home and clear navigation stack
         if (mounted) {

@@ -316,24 +316,38 @@ class _HomeContentState extends State<HomeContent> {
                   children: [
                     Text(
                       recipe.title,
-                      style: AppTextStyles.bodyMedium.copyWith(
+                      style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    FutureBuilder<String>(
-                      future: _recipeService.getUserName(recipe.createdBy),
-                      builder: (context, snapshot) {
-                        return Text(
-                          'by ${snapshot.data ?? recipe.createdBy}',
-                          style: AppTextStyles.bodyMedium.copyWith(
+                    Row(
+                      children: [
+                        Text(
+                          'by: ',
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.textSecondary,
-                            fontSize: 12,
                           ),
-                        );
-                      },
+                        ),
+                        Expanded(
+                          child: FutureBuilder<String?>(
+                            future: _authService.getUsernameById(recipe.createdBy),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? 'Unknown User',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Row(

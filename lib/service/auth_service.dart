@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:moroccan_recipies_app/utils/admin_helper.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,37 +19,28 @@ class AuthService {
   Future<UserCredential> signUp({
     required String email,
     required String password,
-    required String fullName,
+    required String username,
   }) async {
     try {
-      print('Attempting to sign up with email: $email'); // Debug print
-      print('Full name: $fullName'); // Debug print
-      
-      // Create user with email and password
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      print('User account created successfully'); // Debug print
 
-      // Update user profile with full name
-      await userCredential.user?.updateDisplayName(fullName);
-      print('User profile updated with name: $fullName'); // Debug print
+      // Check if this is the admin email (test@test.com)
+      bool isAdmin = email.toLowerCase() == 'test@test.com';
 
-      // Save user data to Firestore
+      // Create user document in Firestore
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'email': email,
-        'fullName': fullName,
-        'createdAt': FieldValue.serverTimestamp(),
+        'username': username,
+        'isAdmin': isAdmin,
+        'uid': userCredential.user!.uid,
       });
 
       return userCredential;
-    } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Error: ${e.code} - ${e.message}'); // Debug print
-      throw _handleAuthException(e);
     } catch (e) {
-      print('Unexpected error during sign up: $e'); // Debug print for other errors
-      throw 'An unexpected error occurred. Please try again.';
+      throw 'Failed to sign up: $e';
     }
   }
 
@@ -55,16 +50,30 @@ class AuthService {
     required String password,
   }) async {
     try {
-      print('Attempting to sign in with email: $email'); // Debug print
-      final result = await _auth.signInWithEmailAndPassword(
-        email: email,
+      print('Current auth state: ${_auth.currentUser}');
+      await signOut();
+      
+      // Add platform check
+      print('Running on: ${Platform.isIOS ? "iOS" : "Android"}');
+      
+      print('Attempting to sign in with email: $email');
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
         password: password,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw 'Connection timeout',
       );
-      print('Sign in successful'); // Debug print
-      return result;
+      
+      print('Sign in successful: ${userCredential.user?.uid}');
+      return userCredential;
     } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Error: ${e.code} - ${e.message}'); // Debug print
-      throw _handleAuthException(e);
+      print('Firebase Auth Error Code: ${e.code}');
+      print('Firebase Auth Error Message: ${e.message}');
+      throw 'Failed to sign in: ${e.message}';
+    } catch (e) {
+      print('General Error: $e');
+      throw 'Failed to sign in: $e';
     }
   }
 
@@ -124,7 +133,10 @@ class AuthService {
   bool get isUserSignedIn => currentUser != null;
 
   // Get user display name
-  String? get userDisplayName => currentUser?.displayName;
+  String? get userDisplayName {
+    return _auth.currentUser?.displayName ?? 
+           _auth.currentUser?.email?.split('@')[0];
+  }
 
   // Get user email
   String? get userEmail => currentUser?.email;
@@ -199,6 +211,46 @@ class AuthService {
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  // Add this method to check if current user is admin
+  Future<bool> isCurrentUserAdmin() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    final userDoc = await _firestore.collection('users').doc(user.uid).get();
+    return userDoc.data()?['isAdmin'] ?? false;
+  }
+
+  // Add this method to check if a specific user is admin
+  Future<bool> isUserAdmin(String uid) async {
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    return userDoc.data()?['isAdmin'] ?? false;
+  }
+
+  // Add method to get username from Firestore
+  Future<String?> getCurrentUsername() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid != null) {
+        final doc = await _firestore.collection('users').doc(uid).get();
+        return doc.data()?['username'];
+      }
+      return null;
+    } catch (e) {
+      print('Error getting username: $e');
+      return null;
+    }
+  }
+
+  Future<String?> getUsernameById(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      return userDoc.data()?['username'] as String?;
+    } catch (e) {
+      print('Error getting username: $e');
+      return null;
     }
   }
 }

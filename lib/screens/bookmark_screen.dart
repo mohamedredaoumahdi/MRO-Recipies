@@ -16,8 +16,10 @@ class BookmarkScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userId = _authService.currentUser?.uid;
-    
+    print('Current UserID: $userId'); // Debug print
+
     if (userId == null) {
+      print('No user logged in'); // Debug print
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -45,7 +47,12 @@ class BookmarkScreen extends StatelessWidget {
       body: StreamBuilder<List<Recipe>>(
         stream: _recipeService.getLikedRecipes(userId),
         builder: (context, snapshot) {
+          print('StreamBuilder state: ${snapshot.connectionState}'); // Debug print
+          print('StreamBuilder error: ${snapshot.error}'); // Debug print
+          print('StreamBuilder data: ${snapshot.data?.length}'); // Debug print
+
           if (snapshot.hasError) {
+            print('Error in StreamBuilder: ${snapshot.error}'); // Debug print
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
@@ -54,6 +61,7 @@ class BookmarkScreen extends StatelessWidget {
           }
 
           final recipes = snapshot.data ?? [];
+          print('Number of recipes: ${recipes.length}'); // Debug print
 
           if (recipes.isEmpty) {
             return Center(
@@ -167,6 +175,33 @@ class BookmarkScreen extends StatelessWidget {
                                         userId,
                                       );
                                     },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Row(
+                                children: [
+                                  Text(
+                                    'by: ',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: FutureBuilder<String?>(
+                                      future: _authService.getUsernameById(recipe.createdBy),
+                                      builder: (context, snapshot) {
+                                        return Text(
+                                          snapshot.data ?? 'Unknown User',
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ],
                               ),
