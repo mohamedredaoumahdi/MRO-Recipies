@@ -160,7 +160,7 @@ class RecipeService {
   }
 
   Future<bool> toggleLike(String recipeId, String userId) async {
-    final recipeRef = _recipesCollection.doc(recipeId);
+    //final recipeRef = _recipesCollection.doc(recipeId);
     final userLikesRef = _recipesCollection.doc(userId).collection('likes').doc(recipeId);
 
     return FirebaseFirestore.instance.runTransaction<bool>((transaction) async {

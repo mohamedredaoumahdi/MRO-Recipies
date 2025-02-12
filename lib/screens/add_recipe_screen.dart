@@ -26,6 +26,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _cookTimeController = TextEditingController();
   final _servingsController = TextEditingController();
   String _selectedDifficulty = 'Easy';
+  final _caloriesController = TextEditingController();
 
   Future<void> _pickImage() async {
     try {
@@ -264,6 +265,30 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
+            // Calories
+            TextFormField(
+              controller: _caloriesController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Calories',
+                hintText: 'Kcal per serving',
+                suffixText: 'Kcal',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter calories';
+                }
+                if (int.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+
             // Difficulty
             DropdownButtonFormField<String>(
               value: _selectedDifficulty,
@@ -472,6 +497,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
         print('User ID: $userId');
         
+        final calories = int.tryParse(_caloriesController.text);
+        if (calories == null) {
+          throw 'Please enter valid calories';
+        }
+
         final recipe = Recipe(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           createdBy: userId,
@@ -488,7 +518,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           difficulty: _selectedDifficulty,
           videoUrl: '',
           tags: [],
-          calories: 0,
+          calories: calories,
           likesCount: 0,
           commentsCount: 0,
         );
@@ -528,6 +558,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _prepTimeController.dispose();
     _cookTimeController.dispose();
     _servingsController.dispose();
+    _caloriesController.dispose();
     super.dispose();
   }
 }

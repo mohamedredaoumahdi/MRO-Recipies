@@ -5,6 +5,7 @@ import 'package:moroccan_recipies_app/models/recipe.dart';
 import 'package:moroccan_recipies_app/service/auth_service.dart';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
+import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
 
 class BookmarkScreen extends StatelessWidget {
   final VoidCallback onBack;
@@ -85,18 +86,20 @@ class BookmarkScreen extends StatelessWidget {
             itemCount: recipes.length,
             itemBuilder: (context, index) {
               final recipe = recipes[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    // Navigate to recipe details
-                    // Navigator.push(context, MaterialPageRoute(
-                    //   builder: (context) => RecipeDetailScreen(recipe: recipe),
-                    // ));
-                  },
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RecipeDetailsPage(recipe: recipe),
+                    ),
+                  );
+                },
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                  ),
                   child: Row(
                     children: [
                       ClipRRect(
