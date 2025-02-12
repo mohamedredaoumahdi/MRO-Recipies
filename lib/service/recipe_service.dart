@@ -117,15 +117,24 @@ class RecipeService {
     }
   }
 
-  // Search recipes by title or tags
+  // Search recipes by title
   Stream<List<Recipe>> searchRecipes(String query) {
+    // Convert query to lowercase for case-insensitive search
+    query = query.toLowerCase();
+    
     return _recipesCollection
-        .where('title', isGreaterThanOrEqualTo: query)
-        .where('title', isLessThan: '${query}z')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Recipe.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Recipe.fromFirestore(doc))
+              .where((recipe) => 
+                  recipe.title.toLowerCase().contains(query) ||
+                  recipe.description.toLowerCase().contains(query) ||
+                  recipe.category.toLowerCase().contains(query) ||
+                  recipe.ingredients.any((ingredient) => 
+                      ingredient.toLowerCase().contains(query)))
+              .toList();
+        });
   }
 
   // Update likes count

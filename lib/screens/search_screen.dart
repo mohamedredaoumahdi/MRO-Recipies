@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
+import 'package:moroccan_recipies_app/models/recipe.dart';
+import 'package:moroccan_recipies_app/service/recipe_service.dart';
+import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
+import 'dart:convert';
+import 'dart:async';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key, required this.onBack});
@@ -11,15 +16,34 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final RecipeService _recipeService = RecipeService();
+  String _searchQuery = '';
+  String _selectedCategory = '';
+  List<Recipe> _searchResults = [];
+  bool _isLoading = false;
+  Timer? _debounce;
   
   // Example data - replace with your actual data
   final List<String> trendingSearches = [
     'Couscous', 'Tajine', 'Pastilla', 'Harira', 'Rfissa'
   ];
   
-  final List<String> recentSearches = [
-    'Moroccan Bread', 'Mint Tea', 'Chicken Tajine'
-  ];
+  List<String> recentSearches = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,73 +77,212 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // Filter Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-              child: Row(
-                children: [
-                  _buildFilterChip('Category'),
-                  SizedBox(width: screenWidth * 0.02),
-                  _buildFilterChip('Ingredients'),
-                  SizedBox(width: screenWidth * 0.02),
-                  _buildFilterChip('Cooking Time'),
-                  SizedBox(width: screenWidth * 0.02),
-                  _buildFilterChip('Difficulty'),
-                ],
+            // Search Results or Default Content
+            Expanded(
+              child: _searchQuery.isEmpty
+                  ? _buildDefaultContent(screenWidth, screenHeight)
+                  : _buildSearchResults(screenWidth),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults(double screenWidth) {
+    if (_searchQuery.isEmpty) {
+      return _buildDefaultContent(screenWidth, MediaQuery.of(context).size.height);
+    }
+
+    return StreamBuilder<List<Recipe>>(
+      stream: _recipeService.searchRecipes(_searchQuery),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, 
+                  size: 64, 
+                  color: AppColors.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(color: AppColors.error),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final recipes = snapshot.data ?? [];
+
+        if (recipes.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, 
+                  size: 64, 
+                  color: AppColors.textSecondary),
+                const SizedBox(height: 16),
+                Text(
+                  'No recipes found for "$_searchQuery"',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.all(screenWidth * 0.04),
+          itemCount: recipes.length,
+          itemBuilder: (context, index) {
+            final recipe = recipes[index];
+            return _buildRecipeCard(recipe);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRecipeCard(Recipe recipe) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RecipeDetailsPage(recipe: recipe),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          children: [
+            // Recipe Image
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: Image.memory(
+                base64Decode(recipe.imageUrl),
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 120,
+                    height: 120,
+                    color: AppColors.background,
+                    child: Icon(Icons.image_not_supported, 
+                      color: AppColors.textSecondary),
+                  );
+                },
               ),
             ),
-
+            // Recipe Details
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.all(screenWidth * 0.04),
-                children: [
-                  // Trending Searches
-                  Text(
-                    'Trending Searches',
-                    style: AppTextStyles.heading2,
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  Wrap(
-                    spacing: screenWidth * 0.02,
-                    children: trendingSearches
-                        .map((search) => _buildTrendingChip(search))
-                        .toList(),
-                  ),
-
-                  SizedBox(height: screenHeight * 0.04),
-
-                  // Recent Searches
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recent Searches',
-                        style: AppTextStyles.heading2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            recentSearches.clear();
-                          });
-                        },
-                        child: Text(
-                          'Clear',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.primary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      recipe.description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, 
+                          size: 16, 
+                          color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${recipe.prepTime + recipe.cookTime} min',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  ...recentSearches.map((search) => _buildRecentSearchTile(search)),
-                ],
+                        const SizedBox(width: 16),
+                        Icon(Icons.local_fire_department, 
+                          size: 16, 
+                          color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${recipe.calories} Kcal',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDefaultContent(double screenWidth, double screenHeight) {
+    return ListView(
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      children: [
+        Text('Trending Searches', style: AppTextStyles.heading2),
+        SizedBox(height: screenHeight * 0.02),
+        Wrap(
+          spacing: screenWidth * 0.02,
+          children: trendingSearches.map((search) => _buildTrendingChip(search)).toList(),
+        ),
+        SizedBox(height: screenHeight * 0.04),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Recent Searches', style: AppTextStyles.heading2),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  recentSearches.clear();
+                });
+              },
+              child: Text(
+                'Clear',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: screenHeight * 0.02),
+        ...recentSearches.map((search) => _buildRecentSearchTile(search)),
+      ],
     );
   }
 
@@ -140,12 +303,15 @@ class _SearchScreenState extends State<SearchScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.trending_up, size: 16, color: AppColors.primary),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(label),
         ],
       ),
       onPressed: () {
-        // Handle trending search selection
+        setState(() {
+          _searchController.text = label;
+          _searchQuery = label;
+        });
       },
     );
   }
@@ -163,7 +329,10 @@ class _SearchScreenState extends State<SearchScreen> {
         },
       ),
       onTap: () {
-        // Handle recent search selection
+        setState(() {
+          _searchController.text = search;
+          _searchQuery = search;
+        });
       },
     );
   }
@@ -211,5 +380,13 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
   }
 }
