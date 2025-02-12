@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/service/auth_service.dart';
 import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // First, define HomeContent widget
 class HomeContent extends StatefulWidget {
@@ -19,6 +20,27 @@ class _HomeContentState extends State<HomeContent> {
   final RecipeService _recipeService = RecipeService();
   final AuthService _authService = AuthService();
   String _selectedCategory = 'All';  // Track selected category
+  List<String> _bookmarkedRecipeIds = []; // List to store bookmarked recipe IDs
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookmarks(); // Load bookmarks from persistent storage
+  }
+
+  // Load bookmarks from shared preferences
+  void _loadBookmarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _bookmarkedRecipeIds = prefs.getStringList('bookmarkedRecipes') ?? [];
+    });
+  }
+
+  // Save bookmarks to shared preferences
+  void _saveBookmarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('bookmarkedRecipes', _bookmarkedRecipeIds);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +243,8 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   Widget _buildRecipeCard(Recipe recipe) {
+    final bool isBookmarked = _bookmarkedRecipeIds.contains(recipe.id);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -228,7 +252,10 @@ class _HomeContentState extends State<HomeContent> {
           MaterialPageRoute(
             builder: (context) => RecipeDetailsPage(recipe: recipe),
           ),
-        );
+        ).then((_) {
+          // Reload bookmarks after returning from details page
+          _loadBookmarks();
+        });
       },
       child: SizedBox(
         width: 200,
@@ -261,52 +288,31 @@ class _HomeContentState extends State<HomeContent> {
                       },
                     ),
                   ),
-                  Positioned(
-                    top: AppSpacing.sm,
-                    right: AppSpacing.sm,
-                    child: GestureDetector(
-                      onTap: () async {
-                        try {
-                          final userId = _authService.currentUser?.uid;
-                          if (userId != null) {
-                            final isLiked = await _recipeService.toggleLike(recipe.id, userId);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isLiked ? 'Added to bookmarks' : 'Removed from bookmarks'),
-                                backgroundColor: isLiked ? AppColors.success : AppColors.textSecondary,
-                                duration: const Duration(seconds: 1),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to update bookmark'),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(AppSpacing.xs),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
-                        ),
-                        child: StreamBuilder<bool>(
-                          stream: _recipeService.isLikedByUser(recipe.id, _authService.currentUser?.uid ?? ''),
-                          builder: (context, snapshot) {
-                            final isLiked = snapshot.data ?? false;
-                            return Icon(
-                              isLiked ? Icons.favorite : Icons.favorite_border,
-                              size: 20,
-                              color: isLiked ? AppColors.success : AppColors.textPrimary,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Positioned(
+                  //   top: AppSpacing.sm,
+                  //   right: AppSpacing.sm,
+                  //   child: GestureDetector(
+                  //     onTap: () async {
+                  //       final String? userId = _authService.currentUser?.uid; 
+                  //       if (userId != null) {
+                  //         setState(() {
+                  //           if (isBookmarked) {
+                  //             _bookmarkedRecipeIds.add(recipe.id); 
+                  //           } else {
+                  //             _bookmarkedRecipeIds.remove(recipe.id); 
+                  //           }
+                  //         });
+                  //         _saveBookmarks(); // Save updated bookmarks
+                  //         await _recipeService.toggleLike(recipe.id, userId);
+                  //       }
+                  //     },
+                  //     child: Icon(
+                  //       isBookmarked ? Icons.favorite : Icons.favorite_border,
+                  //       size: 20,
+                  //       color: isBookmarked ? AppColors.success : AppColors.textPrimary,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
               Padding(

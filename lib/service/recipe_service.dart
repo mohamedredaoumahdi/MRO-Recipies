@@ -169,31 +169,22 @@ class RecipeService {
   }
 
   Future<bool> toggleLike(String recipeId, String userId) async {
-    print('Toggling like for recipe: $recipeId, user: $userId'); // Debug print
-    try {
-      final userLikesRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('likes')
-          .doc(recipeId);
+    final userLikesRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('likes')
+        .doc(recipeId);
 
-      final likeDoc = await userLikesRef.get();
-      print('Like document exists: ${likeDoc.exists}'); // Debug print
+    final likeDoc = await userLikesRef.get();
 
-      if (likeDoc.exists) {
-        await userLikesRef.delete();
-        print('Like removed'); // Debug print
-        return false;
-      } else {
-        await userLikesRef.set({
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-        print('Like added'); // Debug print
-        return true;
-      }
-    } catch (e) {
-      print('Error in toggleLike: $e'); // Debug print
-      throw e;
+    if (likeDoc.exists) {
+      await userLikesRef.delete(); // Remove bookmark
+      return false; // Not bookmarked
+    } else {
+      await userLikesRef.set({
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      return true; // Bookmarked
     }
   }
 
@@ -240,5 +231,15 @@ class RecipeService {
     return _recipesCollection
         .where('createdBy', isEqualTo: userId)
         .snapshots();
+  }
+
+  Future<bool> isRecipeBookmarked(String recipeId, String userId) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('likes')
+        .doc(recipeId)
+        .get();
+    return doc.exists; // Return true if the recipe is bookmarked
   }
 }

@@ -6,12 +6,41 @@ import 'package:moroccan_recipies_app/service/auth_service.dart';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/screens/add_recipe_screen.dart';
 
-class RecipeDetailsPage extends StatelessWidget {
+class RecipeDetailsPage extends StatefulWidget {
   final Recipe recipe;
   final AuthService _authService = AuthService();
   final RecipeService _recipeService = RecipeService();
 
   RecipeDetailsPage({super.key, required this.recipe});
+
+  @override
+  _RecipeDetailsPageState createState() => _RecipeDetailsPageState();
+}
+
+class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
+  late Recipe recipe;
+  late AuthService _authService;
+  late RecipeService _recipeService;
+  bool _isBookmarked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    recipe = widget.recipe;
+    _authService = widget._authService;
+    _recipeService = widget._recipeService;
+    _checkIfBookmarked();
+  }
+
+  void _checkIfBookmarked() async {
+    final userId = _authService.currentUser?.uid;
+    if (userId != null) {
+      final isBookmarked = await _recipeService.isRecipeBookmarked(recipe.id, userId);
+      setState(() {
+        _isBookmarked = isBookmarked;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +114,21 @@ class RecipeDetailsPage extends StatelessWidget {
                     );
                   }
                   return const SizedBox.shrink();
+                },
+              ),
+              IconButton(
+                icon: Icon(
+                  _isBookmarked ? Icons.favorite : Icons.favorite_border,
+                  color: _isBookmarked ? AppColors.success : AppColors.textPrimary,
+                ),
+                onPressed: () async {
+                  final userId = _authService.currentUser?.uid;
+                  if (userId != null) {
+                    setState(() {
+                      _isBookmarked = !_isBookmarked;
+                    });
+                    await _recipeService.toggleLike(recipe.id, userId);
+                  }
                 },
               ),
             ],
