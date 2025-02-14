@@ -15,13 +15,6 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     print('Firebase initialized successfully');
-    
-    // Add these debug prints
-    print('Current platform: ${DefaultFirebaseOptions.currentPlatform}');
-    print('API Key: ${DefaultFirebaseOptions.currentPlatform.apiKey}');
-    print('Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
-    print('Messaging Sender ID: ${DefaultFirebaseOptions.currentPlatform.messagingSenderId}');
-    print('App ID: ${DefaultFirebaseOptions.currentPlatform.appId}');
   } catch (e) {
     print('Error initializing Firebase: $e');
   }

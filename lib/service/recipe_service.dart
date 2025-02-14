@@ -242,4 +242,18 @@ class RecipeService {
         .get();
     return doc.exists; // Return true if the recipe is bookmarked
   }
+
+  // Add this method in lib/service/recipe_service.dart
+Future<List<Recipe>> getTopLikedRecipes() async {
+  try {
+    QuerySnapshot snapshot = await _recipesCollection
+        .orderBy('likesCount', descending: true)
+        .limit(5)
+        .get();
+
+    return snapshot.docs.map((doc) => Recipe.fromFirestore(doc)).toList();
+  } catch (e) {
+    throw 'Failed to get top liked recipes: $e';
+  }
+}
 }
