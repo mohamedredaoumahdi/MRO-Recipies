@@ -6,6 +6,7 @@ import 'package:moroccan_recipies_app/service/auth_service.dart';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
 import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
+import 'package:moroccan_recipies_app/widgets/book_search_recipe_card.dart'; // Import the new widget
 
 class BookmarkScreen extends StatelessWidget {
   final VoidCallback onBack;
@@ -94,120 +95,10 @@ class BookmarkScreen extends StatelessWidget {
             itemCount: recipes.length,
             itemBuilder: (context, index) {
               final recipe = recipes[index];
-              return _buildRecipeCard(context, recipe);
+              return BookSearchRecipeCard(recipe: recipe, context: context); // Use the new BookSearchRecipeCard widget
             },
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RecipeDetailsPage(recipe: recipe),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 4, // Increased elevation for a more pronounced shadow
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // Rounded corners
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)), // Rounded top corners
-              child: Image.memory(
-                base64Decode(recipe.imageUrl),
-                fit: BoxFit.cover,
-                height: 150, // Fixed height for the image
-                width: double.infinity, // Full width
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppColors.background,
-                    child: Icon(Icons.image_not_supported, color: AppColors.textSecondary),
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    recipe.title,
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16, // Increased font size for better readability
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    recipe.description,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${recipe.prepTime + recipe.cookTime} min',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.favorite, color: AppColors.success),
-                        onPressed: () async {
-                          await _recipeService.toggleLike(recipe.id, _authService.currentUser!.uid);
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        'by: ',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      Expanded(
-                        child: FutureBuilder<String?>(
-                          future: _authService.getUsernameById(recipe.createdBy),
-                          builder: (context, snapshot) {
-                            return Text(
-                              snapshot.data ?? 'Unknown User',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

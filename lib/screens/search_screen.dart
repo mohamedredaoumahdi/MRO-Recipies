@@ -6,6 +6,7 @@ import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:moroccan_recipies_app/service/auth_service.dart';
+import 'package:moroccan_recipies_app/widgets/book_search_recipe_card.dart'; // Import the new widget
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key, required this.onBack});
@@ -149,135 +150,10 @@ class _SearchScreenState extends State<SearchScreen> {
           itemCount: recipes.length,
           itemBuilder: (context, index) {
             final recipe = recipes[index];
-            return _buildRecipeCard(recipe);
+            return BookSearchRecipeCard(recipe: recipe, context: context); // Use the new BookSearchRecipeCard widget
           },
         );
       },
-    );
-  }
-
-  Widget _buildRecipeCard(Recipe recipe) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RecipeDetailsPage(recipe: recipe),
-          ),
-        );
-      },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        child: Row(
-          children: [
-            // Recipe Image
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-              ),
-              child: Image.memory(
-                base64Decode(recipe.imageUrl),
-                width: 120,
-                height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 120,
-                    height: 120,
-                    color: AppColors.background,
-                    child: Icon(Icons.image_not_supported, 
-                      color: AppColors.textSecondary),
-                  );
-                },
-              ),
-            ),
-            // Recipe Details
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      recipe.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      recipe.description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time, 
-                          size: 16, 
-                          color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${recipe.prepTime + recipe.cookTime} min',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Icon(Icons.local_fire_department, 
-                          size: 16, 
-                          color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${recipe.calories} Kcal',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          'by: ',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        Expanded(
-                          child: FutureBuilder<String?>(
-                            future: _authService.getUsernameById(recipe.createdBy),
-                            builder: (context, snapshot) {
-                              return Text(
-                                snapshot.data ?? 'Unknown User',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
