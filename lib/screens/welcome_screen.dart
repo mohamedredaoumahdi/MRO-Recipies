@@ -3,6 +3,7 @@ import 'package:moroccan_recipies_app/screens/register_screen.dart';
 import 'package:moroccan_recipies_app/screens/signIn_screen.dart';
 import 'package:moroccan_recipies_app/theme/app_colors.dart';
 import 'package:moroccan_recipies_app/service/auth_service.dart';
+import 'package:moroccan_recipies_app/widgets/bottom_nav_bar.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -40,6 +41,13 @@ class WelcomeScreen extends StatelessWidget {
                           print('Attempting anonymous sign in...');
                           await authService.signInAnonymously();
                           print('Anonymous sign in successful');
+                                                    // Navigate to the homepage after successful sign-in
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BottomNavBar(),
+                            ),
+                          );
                         } catch (e) {
                           print('Error during anonymous sign in: $e');
                           if (context.mounted) {
