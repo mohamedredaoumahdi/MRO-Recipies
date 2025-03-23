@@ -18,23 +18,65 @@ class MoroccanDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
         children: [
-          const Expanded(child: Divider()),
+          const Expanded(
+            flex: 2,
+            child: Divider(),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Transform.rotate(
+              angle: 0.785398, // 45 degrees in radians
+              child: Container(
+                height: 12,
+                width: 12,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Divider(color: color),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: Icon(
-              Icons.auto_awesome,
-              size: height * 0.8,
+              Icons.star,
+              size: height * 0.7,
               color: color,
             ),
           ),
-          const Expanded(child: Divider()),
+          Expanded(
+            flex: 1,
+            child: Divider(color: color),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Transform.rotate(
+              angle: 0.785398, // 45 degrees in radians
+              child: Container(
+                height: 12,
+                width: 12,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          ),
+          const Expanded(
+            flex: 2,
+            child: Divider(),
+          ),
         ],
       ),
     );
   }
 }
 
-/// A pattern-based divider with alternating elements
+/// A pattern-based divider with alternating elements inspired by Moroccan tiles
 class MoroccanPatternDivider extends StatelessWidget {
   final Color color;
   
@@ -67,26 +109,28 @@ class MoroccanPatternDivider extends StatelessWidget {
 }
 
 /// A container with Moroccan arch-style decoration at the top
-class MoroccanArchDecoration extends StatelessWidget {
+class MoroccanArchContainer extends StatelessWidget {
   final Widget child;
-  final Color color;
+  final Color backgroundColor;
+  final Color archColor;
+  final double height;
   
-  const MoroccanArchDecoration({
+  const MoroccanArchContainer({
     Key? key,
     required this.child,
-    this.color = Colors.white,
+    this.backgroundColor = Colors.white,
+    this.archColor = AppColors.primary,
+    this.height = 200,
   }) : super(key: key);
   
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: height,
       margin: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -98,13 +142,19 @@ class MoroccanArchDecoration extends StatelessWidget {
       child: Column(
         children: [
           ClipPath(
-            clipper: ArchClipper(),
+            clipper: MoroccanArchClipper(),
             child: Container(
-              height: 20,
-              color: color,
+              height: 40,
+              decoration: BoxDecoration(
+                color: archColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
             ),
           ),
-          child,
+          Expanded(child: child),
         ],
       ),
     );
@@ -112,17 +162,19 @@ class MoroccanArchDecoration extends StatelessWidget {
 }
 
 /// Clipper for Moroccan-style arches
-class ArchClipper extends CustomClipper<Path> {
+class MoroccanArchClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, size.height);
     
-    // Create multiple arches
-    final archWidth = size.width / 7;
-    for (int i = 0; i < 7; i++) {
+    // Create 5 arches
+    final archCount = 5;
+    final archWidth = size.width / archCount;
+    
+    for (int i = 0; i < archCount; i++) {
       path.relativeQuadraticBezierTo(
-        archWidth / 2, -size.height,
+        archWidth / 2, -size.height * 0.8,
         archWidth, 0,
       );
     }
@@ -135,150 +187,172 @@ class ArchClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-/// A custom information card for displaying recipe metadata
-class InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
+/// A custom decoration painter for Moroccan pattern backgrounds
+class MoroccanPatternPainter extends CustomPainter {
   final Color color;
-
-  const InfoCard({
-    Key? key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  }) : super(key: key);
-
+  final double opacity;
+  
+  MoroccanPatternPainter({
+    this.color = AppColors.primary,
+    this.opacity = 0.1,
+  });
+  
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Card(
-        elevation: 0,
-        color: color.withOpacity(0.1),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Icon(icon, color: color),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withOpacity(opacity)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    
+    final patternSize = 30.0;
+    final horizontalCount = (size.width / patternSize).ceil() + 1;
+    final verticalCount = (size.height / patternSize).ceil() + 1;
+    
+    // Draw vertical and horizontal lines first
+    for (int i = 0; i < horizontalCount; i++) {
+      final x = i * patternSize;
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        paint,
+      );
+    }
+    
+    for (int i = 0; i < verticalCount; i++) {
+      final y = i * patternSize;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        paint,
+      );
+    }
+    
+    // Draw diagonal lines
+    for (int i = 0; i < horizontalCount + verticalCount; i++) {
+      final startX = i * patternSize;
+      final startY = 0.0;
+      
+      final endX = 0.0;
+      final endY = i * patternSize;
+      
+      if (startX <= size.width) {
+        canvas.drawLine(
+          Offset(startX, startY),
+          Offset(startX > size.width ? size.width : startX, startY + (startX > size.width ? (startX - size.width) : 0)),
+          paint,
+        );
+      }
+      
+      if (endY <= size.height && i > 0) {
+        canvas.drawLine(
+          Offset(endX, endY),
+          Offset(endX + (endY > size.height ? (endY - size.height) : 0), endY > size.height ? size.height : endY),
+          paint,
+        );
+      }
+    }
   }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Animated recipe card that scales slightly on hover/tap
-class AnimatedRecipeCard extends StatefulWidget {
+/// A card with Moroccan-inspired decoration
+class MoroccanCard extends StatelessWidget {
   final Widget child;
-  final Function()? onTap;
-
-  const AnimatedRecipeCard({
+  final Color backgroundColor;
+  final Color borderColor;
+  final double elevation;
+  final EdgeInsetsGeometry padding;
+  
+  const MoroccanCard({
     Key? key,
     required this.child,
-    this.onTap,
+    this.backgroundColor = Colors.white,
+    this.borderColor = AppColors.primary,
+    this.elevation = 2,
+    this.padding = const EdgeInsets.all(16),
   }) : super(key: key);
-
-  @override
-  _AnimatedRecipeCardState createState() => _AnimatedRecipeCardState();
-}
-
-class _AnimatedRecipeCardState extends State<AnimatedRecipeCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+  
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) {
-        setState(() {
-          _isHovered = true;
-          _controller.forward();
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          _isHovered = false;
-          _controller.reverse();
-        });
-      },
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _isHovered
-                          ? AppColors.primary.withOpacity(0.2)
-                          : Colors.black.withOpacity(0.1),
-                      blurRadius: _isHovered ? 12 : 6,
-                      offset: Offset(0, _isHovered ? 6 : 3),
-                    ),
-                  ],
-                ),
-                child: child,
-              ),
-            );
-          },
-          child: widget.child,
+    return Card(
+      elevation: elevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: borderColor.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: child,
       ),
     );
   }
 }
 
-/// Creates a custom page route transition
+/// A button styled with Moroccan design elements
+class MoroccanButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final Widget child;
+  final Color color;
+  final double height;
+  final double borderRadius;
+  
+  const MoroccanButton({
+    Key? key,
+    required this.onPressed,
+    required this.child,
+    this.color = AppColors.primary,
+    this.height = 48,
+    this.borderRadius = 12,
+  }) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        elevation: 4,
+        padding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        minimumSize: Size(double.infinity, height),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Decorative patterns as background
+          ClipRRect(
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: CustomPaint(
+              painter: MoroccanPatternPainter(
+                color: Colors.white,
+                opacity: 0.1,
+              ),
+              child: Container(
+                height: height,
+                width: double.infinity,
+              ),
+            ),
+          ),
+          // Main content
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Creates a custom page route transition with Moroccan flair
 Route createRoute(Widget page) {
   return PageRouteBuilder(
     pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -288,11 +362,17 @@ Route createRoute(Widget page) {
       const curve = Curves.easeOutCubic;
 
       var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      var fadeAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: curve,
+        ),
+      );
 
       return SlideTransition(
         position: animation.drive(tween),
         child: FadeTransition(
-          opacity: animation,
+          opacity: fadeAnimation,
           child: child,
         ),
       );
@@ -304,13 +384,13 @@ Route createRoute(Widget page) {
 Color getDifficultyColor(String difficulty) {
   switch (difficulty.toLowerCase()) {
     case 'easy':
-      return AppColors.accent3;
+      return AppColors.success;
     case 'medium':
-      return AppColors.accent2;
+      return AppColors.warning;
     case 'hard':
-      return AppColors.primary;
+      return AppColors.error;
     default:
-      return AppColors.accent3;
+      return AppColors.success;
   }
 }
 
@@ -318,12 +398,12 @@ Color getDifficultyColor(String difficulty) {
 IconData getDifficultyIcon(String difficulty) {
   switch (difficulty.toLowerCase()) {
     case 'easy':
-      return Icons.sentiment_satisfied;
+      return Icons.sentiment_satisfied_alt;
     case 'medium':
       return Icons.sentiment_neutral;
     case 'hard':
       return Icons.sentiment_dissatisfied;
     default:
-      return Icons.sentiment_satisfied;
+      return Icons.sentiment_satisfied_alt;
   }
 }
