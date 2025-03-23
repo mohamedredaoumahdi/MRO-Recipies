@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:moroccan_recipies_app/service/auth_service.dart';
 import 'package:moroccan_recipies_app/service/recipe_service.dart';
 import 'package:moroccan_recipies_app/screens/add_recipe_screen.dart';
+import 'package:moroccan_recipies_app/widgets/common/moroccan_components.dart';
 
 class RecipeDetailsPage extends StatefulWidget {
   final Recipe recipe;
@@ -51,10 +52,13 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
+            stretch: true,
+            backgroundColor: AppColors.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
+                  // Recipe image
                   Image.memory(
                     base64Decode(recipe.imageUrl),
                     fit: BoxFit.cover,
@@ -80,18 +84,62 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                       ),
                     ),
                   ),
+                  // Title at bottom
+                  Positioned(
+                    bottom: 16,
+                    left: 16,
+                    right: 16,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                          ),
+                          child: Text(
+                            recipe.category,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          recipe.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            backgroundColor: AppColors.background,
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.7),
+                  color: Colors.black26,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back),
+                child: const Icon(Icons.arrow_back, color: Colors.white),
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -103,11 +151,25 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                     return Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.white),
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black26,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                          ),
                           onPressed: () => _editRecipe(context),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.white),
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black26,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.delete, color: Colors.white, size: 20),
+                          ),
                           onPressed: () => _deleteRecipe(context),
                         ),
                       ],
@@ -117,9 +179,17 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                 },
               ),
               IconButton(
-                icon: Icon(
-                  _isBookmarked ? Icons.favorite : Icons.favorite_border,
-                  color: _isBookmarked ? AppColors.success : AppColors.textPrimary,
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _isBookmarked ? AppColors.primary : Colors.black26,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isBookmarked ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 onPressed: () async {
                   final userId = _authService.currentUser?.uid;
@@ -131,6 +201,7 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                   }
                 },
               ),
+              const SizedBox(width: 8),
             ],
           ),
 
@@ -139,55 +210,68 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title and Quick Info Section
-                Container(
+                // Quick Info Cards
+                Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        recipe.title,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      InfoCard(
+                        icon: Icons.access_time,
+                        label: 'Total Time',
+                        value: '${recipe.prepTime + recipe.cookTime} min',
+                        color: AppColors.accent1,
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildInfoCard(
-                            icon: Icons.access_time,
-                            label: 'Cook Time',
-                            value: '${recipe.cookTime} min',
-                          ),
-                          const SizedBox(width: 12),
-                          _buildInfoCard(
-                            icon: Icons.timer,
-                            label: 'Prep Time',
-                            value: '${recipe.prepTime} min',
-                          ),
-                          const SizedBox(width: 12),
-                          _buildInfoCard(
-                            icon: Icons.local_fire_department,
-                            label: 'Calories',
-                            value: '${recipe.calories} kcal',
-                          ),
-                        ],
+                      InfoCard(
+                        icon: Icons.local_fire_department,
+                        label: 'Calories',
+                        value: '${recipe.calories} kcal',
+                        color: AppColors.accent2,
+                      ),
+                      InfoCard(
+                        icon: Icons.people_alt_outlined,
+                        label: 'Servings',
+                        value: '${recipe.servings}',
+                        color: AppColors.primary,
+                      ),
+                      InfoCard(
+                        icon: getDifficultyIcon(recipe.difficulty),
+                        label: 'Difficulty',
+                        value: recipe.difficulty,
+                        color: getDifficultyColor(recipe.difficulty),
                       ),
                     ],
                   ),
                 ),
 
-                // Ingredients Section
+                // Description
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    recipe.description,
+                    style: AppTextStyles.bodyLarge,
+                  ),
+                ),
+
+                const MoroccanDivider(),
+
+                // Ingredients Section with Moroccan-inspired decoration
                 Container(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Ingredients',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.kitchen,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Ingredients',
+                            style: AppTextStyles.heading2,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       ...recipe.ingredients.map((ingredient) => Padding(
@@ -197,20 +281,20 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                             Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.2),
+                                color: AppColors.accent2.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Icon(
                                 Icons.check,
                                 size: 16,
-                                color: AppColors.primary,
+                                color: AppColors.accent2,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 ingredient,
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: AppTextStyles.bodyLarge,
                               ),
                             ),
                           ],
@@ -220,17 +304,26 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                   ),
                 ),
 
+                const MoroccanDivider(),
+
                 // Steps Section
                 Container(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Steps',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.format_list_numbered,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Preparation Steps',
+                            style: AppTextStyles.heading2,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       ...recipe.steps.asMap().entries.map((entry) => Padding(
@@ -259,7 +352,7 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
                             Expanded(
                               child: Text(
                                 entry.value,
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: AppTextStyles.bodyLarge,
                               ),
                             ),
                           ],
@@ -275,45 +368,6 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.2),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -367,4 +421,4 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage> {
       }
     }
   }
-} 
+}

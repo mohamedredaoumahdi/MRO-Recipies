@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:moroccan_recipies_app/models/recipe.dart';
 import 'package:moroccan_recipies_app/screens/recipe_details_page.dart';
 import 'dart:convert';
-import 'package:moroccan_recipies_app/theme/app_colors.dart'; // Import AppColors
-import 'package:moroccan_recipies_app/service/auth_service.dart'; // Import AuthService
+import 'package:moroccan_recipies_app/theme/app_colors.dart';
+import 'package:moroccan_recipies_app/service/auth_service.dart';
+import 'package:moroccan_recipies_app/widgets/common/moroccan_components.dart';
 
 class BookSearchRecipeCard extends StatelessWidget {
   final Recipe recipe;
   final BuildContext context;
-  final AuthService _authService = AuthService(); // Define AuthService instance
+  final AuthService _authService = AuthService();
 
   BookSearchRecipeCard({Key? key, required this.recipe, required this.context}) : super(key: key);
 
@@ -18,98 +19,171 @@ class BookSearchRecipeCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => RecipeDetailsPage(recipe: recipe),
-          ),
+          createRoute(RecipeDetailsPage(recipe: recipe)),
         );
       },
-      child: Card(
-        elevation: 4, // Increased elevation for a more pronounced shadow
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // Rounded corners
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)), // Rounded top corners
-              child: Image.memory(
-                base64Decode(recipe.imageUrl),
-                fit: BoxFit.cover,
-                height: 150, // Fixed height for the image
-                width: double.infinity, // Full width
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: Icon(Icons.image_not_supported, color: Colors.grey),
-                  );
-                },
-              ),
+      child: Container(
+        height: 140,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    recipe.title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary, // Use AppColors
+          ],
+        ),
+        child: Row(
+          children: [
+            // Image
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: SizedBox(
+                width: 120,
+                height: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.memory(
+                      base64Decode(recipe.imageUrl),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Icon(Icons.image_not_supported, color: Colors.grey),
+                        );
+                      },
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    recipe.description,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary, // Use AppColors
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 16, color: AppColors.textSecondary), // Use AppColors
-                      const SizedBox(width: 4),
-                      Text(
-                        '${recipe.prepTime + recipe.cookTime} min',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12), // Use AppColors
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(Icons.local_fire_department, size: 16, color: AppColors.textSecondary), // Use AppColors
-                      const SizedBox(width: 4),
-                      Text(
-                        '${recipe.calories} Kcal',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12), // Use AppColors
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        'by: ',
-                        style: TextStyle(color: AppColors.textSecondary), // Use AppColors
-                      ),
-                      Expanded(
-                        child: FutureBuilder<String?>(
-                          future: _authService.getUsernameById(recipe.createdBy),
-                          builder: (context, snapshot) {
-                            return Text(
-                              snapshot.data ?? 'Unknown User',
-                              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold), // Use AppColors
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            );
-                          },
+                    // Category badge
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          recipe.category,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      recipe.title,
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    
+                    // Description
+                    Expanded(
+                      child: Text(
+                        recipe.description,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    
+                    // Bottom row with metadata
+                    Row(
+                      children: [
+                        // Time
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${recipe.prepTime + recipe.cookTime} min',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 16),
+                        
+                        // Calories
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.local_fire_department,
+                              size: 14,
+                              color: AppColors.accent2,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${recipe.calories} kcal',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const Spacer(),
+                        
+                        // Difficulty
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: getDifficultyColor(recipe.difficulty).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            recipe.difficulty,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: getDifficultyColor(recipe.difficulty),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
