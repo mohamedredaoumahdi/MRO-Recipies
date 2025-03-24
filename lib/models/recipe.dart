@@ -42,6 +42,12 @@ class Recipe {
     this.commentsCount = 0,
   });
 
+
+  // Add the totalTime getter here
+  int get totalTime => prepTime + cookTime;
+
+
+  
   // Convert Recipe object to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
@@ -65,11 +71,10 @@ class Recipe {
     };
   }
 
-  // Create Recipe object from Firestore document
-  factory Recipe.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    // Add this factory constructor for easier testing
+  factory Recipe.fromMap(String id, Map<String, dynamic> data) {
     return Recipe(
-      id: doc.id,
+      id: id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       category: data['category'] ?? '',
@@ -89,4 +94,11 @@ class Recipe {
       commentsCount: data['commentsCount'] ?? 0,
     );
   }
+
+  // Then modify your fromFirestore to use the new method
+  factory Recipe.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return Recipe.fromMap(doc.id, data);
+  }
+
 }
